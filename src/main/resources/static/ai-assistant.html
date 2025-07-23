@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI医疗助手</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #212529;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .subtitle {
+            font-size: 15px;
+            color: #6c757d;
+            margin-bottom: 24px;
+        }
+
+        .status-info {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            border-left: 5px solid #81c784;
+        }
+
+        .chat-box {
+            height: 480px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 14px 20px;
+            border-radius: 20px;
+            max-width: 85%;
+            margin: 12px 0;
+            line-height: 1.6;
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: left;
+        }
+
+        .ai-message {
+            background: #ecf0f3;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .input-section {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .input-section input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid #dfe4ea;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-section input:focus {
+            border-color: #007bff;
+        }
+
+        .input-section button {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .input-section button:hover {
+            background: #0056b3;
+        }
+
+        .input-section button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: none;
+            background: #ecf0f3;
+            padding: 15px 20px;
+            border-radius: 18px;
+            max-width: 80%;
+            margin: 15px 0;
+            border: 1px solid #e0e0e0;
+        }
+
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #999;
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 600px) {
+            .chat-box {
+                height: 360px;
+                padding: 16px;
+            }
+
+            .container {
+                padding: 24px 16px;
+            }
+
+            .input-section {
+                flex-direction: column;
+            }
+
+            .input-section button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🤖 AI医疗助手</h1>
+    <p class="subtitle">专业的医疗健康咨询助手，基于医学知识库为您提供准确的健康信息</p>
+
+    <div class="status-info">
+        <strong>系统状态：</strong><span id="systemStatus">检查中...</span>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span><span></span><span></span>
+            </div>
+            <span style="margin-left: 10px;">AI正在思考中...</span>
+        </div>
+    </div>
+
+    <div class="input-section">
+        <input type="text" id="messageInput" placeholder="请输入您的问题..." onkeypress="handleKeyPress(event)">
+        <button id="sendButton" onclick="sendMessage()">发送</button>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '/ai';
+    let isProcessing = false;
+
+    window.onload = function () {
+        checkSystemStatus();
+        addMessage('ai', '您好！我是AI医疗助手 🩺\n\n我可以为您提供以下服务：\n• 体检数据查询 (MCP工具)\n• 体检报告分析 (RAG分析)\n• 医学知识问答 (RAG检索)\n• 一般健康咨询\n\n请随时向我提问！');
+    };
+
+    function checkSystemStatus() {
+        fetch(`${API_BASE}/status`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('systemStatus').textContent = `${data.status} - ${data.service}`;
+            })
+            .catch(err => {
+                document.getElementById('systemStatus').textContent = '连接失败: ' + err.message;
+            });
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const question = input.value.trim();
+        if (!question || isProcessing) return;
+
+        input.value = '';
+        setProcessing(true);
+        addMessage('user', question);
+        showTypingIndicator();
+
+        // 体检数据查询匹配
+        if (question.includes('张三') && 
+            (question.includes('体检报告') || question.includes('体检数据') || question.includes('体检'))) {
+            
+            if (question.includes('分析')) {
+                console.log('匹配到体检分析:', '张三');
+                analyzeHealthCheck('张三');
+                return;
+            } else {
+                console.log('匹配到体检查询:', '张三');
+                getHealthCheck('张三');
+                return;
+            }
+        }
+
+        // 其他姓名的体检查询
+        const names = ['李四', '王五', '赵六'];
+        for (const name of names) {
+            if (question.includes(name) && 
+                (question.includes('体检报告') || question.includes('体检数据') || question.includes('体检'))) {
+                
+                if (question.includes('分析')) {
+                    console.log('匹配到体检分析:', name);
+                    analyzeHealthCheck(name);
+                    return;
+                } else {
+                    console.log('匹配到体检查询:', name);
+                    getHealthCheck(name);
+                    return;
+                }
+            }
+        }
+
+        // 通用体检查询模式匹配
+        let personMatch = question.match(/(.+?)(?:的体检报告|体检报告|的体检数据|体检数据)/);
+        if (personMatch) {
+            let personName = personMatch[1].trim();
+            // 清理可能的前缀词
+            personName = personName.replace(/^(请查看|查看|获取|分析)/, '').trim();
+            
+            if (personName && personName.length <= 10) { // 姓名长度合理
+                if (question.includes('分析')) {
+                    console.log('通用匹配到体检分析:', personName);
+                    analyzeHealthCheck(personName);
+                    return;
+                } else {
+                    console.log('通用匹配到体检查询:', personName);
+                    getHealthCheck(personName);
+                    return;
+                }
+            }
+        }
+
+        console.log('走普通问答流程:', question);
+        askRAG(question);
+    }
+
+    function setProcessing(flag) {
+        isProcessing = flag;
+        document.getElementById('sendButton').disabled = flag;
+        document.getElementById('messageInput').disabled = flag;
+        document.getElementById('sendButton').textContent = flag ? '发送中...' : '发送';
+    }
+
+    function showTypingIndicator() {
+        document.getElementById('typingIndicator').style.display = 'block';
+        scrollToBottom();
+    }
+
+    function hideTypingIndicator() {
+        document.getElementById('typingIndicator').style.display = 'none';
+    }
+
+    function getHealthCheck(personName) {
+        console.log('调用体检查询接口:', personName);
+        fetch(`${API_BASE}/health-check`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ personName: personName })
+        })
+        .then(res => {
+            console.log('体检查询响应状态:', res.status);
+            return res.json();
+        })
+        .then(data => {
+            console.log('体检查询响应数据:', data);
+            hideTypingIndicator();
+            if (data.error) {
+                addMessage('ai', + data.error);
+            } else {
+                addMessage('ai', data.answer || data.data);
+            }
+            setProcessing(false);
+        })
+        .catch(err => {
+            console.error('体检查询失败:', err);
+            hideTypingIndicator();
+            addMessage('ai', '获取体检数据失败: ' + err.message);
+            setProcessing(false);
+        });
+    }
+
+    function analyzeHealthCheck(personName) {
+        fetch(`${API_BASE}/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ personName: personName })
+        })
+        .then(res => res.json())
+        .then(data => {
+            hideTypingIndicator();
+            if (data.error) {
+                addMessage('ai', + data.error);
+            } else {
+                addMessage('ai', data.answer || data.analysis);
+            }
+            setProcessing(false);
+        })
+        .catch(err => {
+            hideTypingIndicator();
+            addMessage('ai', '分析体检数据失败: ' + err.message);
+            setProcessing(false);
+        });
+    }
+
+    function askRAG(question) {
+        fetch(`${API_BASE}/ask-rag`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: question })
+        }).then(res => res.json())
+            .then(data => {
+                hideTypingIndicator();
+                setProcessing(false);
+                
+                let result = data.answer;
+                
+                // 显示检索到的文本块 - 包含文件名
+                if (data.sources && data.sources.length > 0) {
+                    result += `\n\n知识库检索结果 (共${data.retrievedCount}个文本块)：`;
+                    
+                    data.sources.forEach((source, i) => {
+                        result += `\n\n【文档${i + 1}】`;
+                        if (source.knowledgeBaseFile) {
+                            result += ` 来源：${source.knowledgeBaseFile}`;
+                        }
+                        if (source.knowledgeBaseType) {
+                            result += ` (${source.knowledgeBaseType})`;
+                        }
+                        if (source.score) {
+                            result += ` 相关度：${source.score.toFixed(2)}`;
+                        }
+                        result += `\n${source.content.substring(0, 150)}...`;
+                    });
+                    
+                    result += `\n\n以上回答基于医学知识库检索 (${data.mode}模式)`;
+                } else {
+                    result += `\n\n基于AI通用知识回答 (${data.mode}模式)`;
+                }
+                
+                addMessage('ai', result);
+            })
+            .catch(err => {
+                hideTypingIndicator();
+                setProcessing(false);
+                addMessage('ai', '问答失败：' + err.message);
+            });
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    }
+
+    function addMessage(sender, content) {
+        const chatBox = document.getElementById('chatBox');
+        const msg = document.createElement('div');
+        msg.className = `message ${sender}-message`;
+        msg.innerHTML = `<div class="message-content">${formatMessageContent(content)}</div>`;
+        chatBox.appendChild(msg);
+        scrollToBottom();
+    }
+
+    function formatMessageContent(text) {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>')
+            .replace(/📚|💡|💭|⚠️|✅/g, '<span style="font-size:1.2em;">$&</span>');
+    }
+
+    function scrollToBottom() {
+        const chatBox = document.getElementById('chatBox');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
+</body>
+</html>

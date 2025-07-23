@@ -1,0 +1,53 @@
+# MCP服务配置
+spring:
+  profiles:
+    active: dev
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: health-check-mcp-server
+        version: 1.0.0
+        sse-message-endpoint: /mcp/message
+    zhipuai:
+      api-key: 0eca78d0b5514cf79f27aa85fd8025b4.YSnuDglHp9gHXeZb
+      model: chatglm_turbo
+
+  datasource:
+    url: jdbc:postgresql://192.168.130.130:5432/mcpdb
+    username: mcpuser
+    password: mcppass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+server:
+  port: 8081
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+  file:
+    encoding: UTF-8
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# 向量存储配置（RAG）
+chroma:
+  client:
+    host: localhost
+    port: 8000
