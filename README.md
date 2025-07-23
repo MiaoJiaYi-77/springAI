@@ -2,14 +2,14 @@
 
 基于Spring Boot和Model Context Protocol (MCP) 的智能医疗健康检查服务，集成AI分析和医学知识库检索功能。
 
-## 🚀 功能特性
+## 功能特性
 
 - **体检数据查询**: 通过MCP工具查询用户体检指标
 - **智能分析**: 基于医学知识库的RAG分析体检报告
 - **医学问答**: 支持医学知识库检索和通用AI问答
 - **Web界面**: 提供友好的聊天式交互界面
 
-## 🏗️ 技术架构
+## 技术架构
 
 - **后端**: Spring Boot 3.2.7 + Spring AI 1.0.0
 - **数据库**: PostgreSQL
@@ -17,14 +17,14 @@
 - **向量存储**: Spring AI Vector Store
 - **协议**: MCP (Model Context Protocol) 2024-11-05
 
-## 📋 系统要求
+## 系统要求
 
 - Java 17+
 - Maven 3.6+
 - PostgreSQL 12+
 - 智谱AI API密钥
 
-## 🛠️ 快速开始
+## 快速开始
 
 ### 1. 环境配置
 
@@ -69,7 +69,7 @@ java -jar target/health-check-mcp-0.0.1-SNAPSHOT.jar
 - Web界面: http://localhost:8081/ai-assistant.html
 
 
-## 📚 API接口
+## API接口
 
 ### MCP协议接口
 
@@ -100,7 +100,7 @@ Content-Type: application/json
 {"question": "白细胞升高的原因"}
 ```
 
-## 📖 医学知识库
+## 医学知识库
 
 系统内置四个医学知识库文件：
 
@@ -109,7 +109,7 @@ Content-Type: application/json
 - `medical_knowledge_cardiovascular.txt`: 心血管疾病知识
 - `medical_knowledge_liver.txt`: 糖尿病专业知识
 
-## 🔧 开发指南
+## 开发指南
 
 ### 项目结构
 
@@ -139,7 +139,7 @@ src/main/resources/
 2. 在 `McpProtocol.handleToolsList()` 中注册工具
 3. 更新工具调用路由逻辑
 
-## 🧪 测试示例
+## 测试示例
 
 ```bash
 # 查询张三的体检数据
@@ -158,7 +158,7 @@ curl -X POST http://localhost:8081/ai/ask-rag \
   -d '{"question": "白细胞计数正常范围是多少？"}'
 ```
 
-## 📝 更新日志
+## 更新日志
 
 ### v1.0.0
 - 实现基础MCP协议支持
