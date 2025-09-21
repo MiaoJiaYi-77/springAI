@@ -10,7 +10,7 @@ spring:
         version: 1.0.0
         sse-message-endpoint: /mcp/message
     zhipuai:
-      api-key: 0eca78d0b5514cf79f27aa85fd8025b4.YSnuDglHp9gHXeZb
+      api-key: your_token
       model: chatglm_turbo
 
   datasource:
